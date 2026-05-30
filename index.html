@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Gaming RP Premium - WolfSide Dashboard</title>
+    <meta name="description" content="Template informativo premium e futurista de alta performance para servidores de Roleplay/Gaming. Totalmente editável, com suporte a Excel e sincronização em tempo real com Google Sheets.">
+    <!-- Fontes Premium AAA -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- CSS Customizado -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Bibliotecas CDN de Alta Confiança -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- Canvas de Partículas Neon -->
+    <canvas id="particles-canvas" class="particles-bg"></canvas>
+    
+    <!-- Camada de Fumaça Cinemática -->
+    <div class="smoke-container">
+        <div class="smoke-layer smoke-1"></div>
+        <div class="smoke-layer smoke-2"></div>
+    </div>
+
+    <!-- Interface Principal (HUD AAA) -->
+    <div class="hud-wrapper">
+        
+        <!-- Cabeçalho de Controle e Configuração -->
+        <header class="hud-header">
+            <div class="header-left">
+                <span class="system-status"><span class="status-indicator online" id="sync-indicator"></span> <span id="sync-text">CONECTANDO...</span></span>
+                <span class="system-divider">//</span>
+                <span class="system-mode-tag" id="active-mode-tag">FACÇÕES: --</span>
+                <span class="system-divider">//</span>
+                <button class="system-mode-tag" id="btn-auth-status" style="cursor:pointer; border:1px dashed var(--purple-border); background:rgba(0,0,0,0.25); display:inline-flex; align-items:center; gap:5px;" title="Clique para se Autenticar e liberar acesso de Edição">
+                    <i data-lucide="lock" style="width:12px; height:12px; color: var(--purple-neon);" id="auth-lock-icon"></i> <span id="auth-status-text">LEITURA (BLOQUEADO)</span>
+                </button>
+            </div>
+            
+            <div class="header-right">
+                <button class="hud-btn" id="btn-open-settings" title="Configurações de Sincronização e Planilha Google Sheets">
+                    <i data-lucide="settings"></i> CONFIGURAÇÕES
+                </button>
+            </div>
+        </header>
+
+        <main class="hud-main">
+            <!-- Título Principal Centralizado -->
+            <div class="title-container">
+                <h1 id="main-title" contenteditable="true" spellcheck="false">WOLFSIDE ROLEPLAY</h1>
+                <p id="main-subtitle" contenteditable="true" spellcheck="false">PAINEL INFORMATIVO DO SERVIDOR &bull; EDITE ESTE SUBTÍTULO</p>
+                <div class="title-underline">
+                    <div class="underline-glow"></div>
+                </div>
+            </div>
+
+            <!-- Console Tático Único Unificado em Glassmorphism -->
+            <div class="console-wrapper" style="width: 100%; display: flex; justify-content: center;">
+                <section class="glass-panel main-console-panel" id="main-glass-panel">
+                    <div class="panel-border-glow"></div>
+                    <div class="console-layout">
+                        <!-- Sidebar Esquerda: Lista de Facções -->
+                        <aside class="console-sidebar">
+                            <div class="sidebar-header">
+                                <h3 class="sidebar-title"><i data-lucide="shield" style="width:16px;height:16px;margin-bottom:-2px;"></i> ORGANIZAÇÕES</h3>
+                                <button class="hud-btn success-btn" id="btn-open-create-faction" style="font-size: 11px; padding: 6px 12px;">
+                                    <i data-lucide="plus-circle"></i> + ADD
+                                </button>
+                            </div>
+                            <div class="sidebar-search">
+                                <div class="search-input-wrapper">
+                                    <i data-lucide="search"></i>
+                                    <input type="text" id="faction-search" class="hud-search-input" placeholder="Pesquisar facção...">
+                                </div>
+                            </div>
+                            <div class="faction-cards-container" id="faction-list-container">
+                                <!-- Cards renderizados via JS -->
+                            </div>
+                        </aside>
+                        
+                        <!-- Workspace Direito: Detalhes da Facção Selecionada -->
+                        <main class="console-workspace" id="console-workspace-area">
+                            <!-- Detalhes do QG/Facção renderizados via JS -->
+                        </main>
+                    </div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Rodapé Discreto e Futurista -->
+        <footer class="hud-footer">
+            <div class="footer-left">
+                <span class="footer-tag">AAA INTERFACE // TERMINAL RP</span>
+            </div>
+            <div class="footer-center">
+                <span id="footer-text" contenteditable="true" spellcheck="false">&copy; 2026 WOLFSIDE RP - TODOS OS DIREITOS RESERVADOS. PROMPT E TEMPLATE EDITÁVEIS.</span>
+            </div>
+            <div class="footer-right">
+                <span class="footer-version" id="footer-time">00:00:00 UTC</span>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- MODAL DE CONFIGURAÇÕES E INTEGRAÇÃO DE DADOS -->
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal-container">
+            <div class="modal-glow"></div>
+            <header class="modal-header">
+                <h3><i data-lucide="sliders-horizontal"></i> CONFIGURAÇÕES & DADOS</h3>
+                <button class="modal-close" id="btn-close-modal"><i data-lucide="x"></i></button>
+            </header>
+            
+            <div class="modal-body">
+                <!-- Seção 1: Arquivo Local Excel -->
+                <div class="config-section">
+                    <h4 class="section-title"><i data-lucide="file-spreadsheet"></i> 1. Importar Planilha Local (Facção WoldSide.xlsx)</h4>
+                    <p class="section-desc">Carregue sua planilha local para preencher o Painel de Facções dinamicamente no navegador.</p>
+                    <div class="upload-area" id="excel-drop-zone">
+                        <i data-lucide="upload-cloud" class="upload-icon"></i>
+                        <p>Arraste o arquivo <strong>Facção WoldSide.xlsx</strong> aqui ou clique para selecionar</p>
+                        <input type="file" id="excel-file-input" accept=".xlsx, .xls" style="display: none;">
+                        <span class="file-loaded-status" id="excel-file-status">Nenhum arquivo carregado</span>
+                    </div>
+                </div>
+
+                <!-- Seção 2: Conexão em tempo real com Firebase (Banco de Dados Gratuito e Ilimitado) -->
+                <div class="config-section">
+                    <h4 class="section-title"><i data-lucide="database"></i> 2. Banco de Dados Firebase (Tempo Real Ilimitado)</h4>
+                    <p class="section-desc">Insira as credenciais do seu projeto gratuito do Firebase Realtime Database para habilitar a sincronização instantânea em tempo real (estilo chat) para toda a sua equipe.</p>
+                    
+                    <div class="form-group">
+                        <label for="firebase-api-key">API Key:</label>
+                        <input type="text" id="firebase-api-key" placeholder="AIzaSyA1..." class="hud-input">
+                    </div>
+
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label for="firebase-db-url">Database URL:</label>
+                        <input type="text" id="firebase-db-url" placeholder="https://seu-projeto-default-rtdb.firebaseio.com" class="hud-input">
+                    </div>
+
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label for="firebase-project-id">Project ID:</label>
+                        <input type="text" id="firebase-project-id" placeholder="seu-projeto-id" class="hud-input">
+                    </div>
+                    
+                    <div class="sync-actions-row" style="margin-top: 15px;">
+                        <button class="hud-btn success-btn" id="btn-connect-sheets" style="width: 100%;"><i data-lucide="link"></i> Salvar & Conectar</button>
+                    </div>
+
+                    <div class="integration-tip">
+                        <i data-lucide="info" class="tip-icon"></i>
+                        <span>O arquivo <strong>firebase_setup_instructions.md</strong> possui o passo a passo ilustrado de como criar a sua conta no Firebase e ativar o Realtime Database gratuito em 1 minuto!</span>
+                    </div>
+                </div>
+
+                <!-- Seção 3: Exportação e Reset -->
+                <div class="config-section">
+                    <h4 class="section-title"><i data-lucide="save"></i> 3. Exportar & Redefinir</h4>
+                    <p class="section-desc">Salve sua configuração e dados editados em formato local ou resete tudo para o padrão de fábrica.</p>
+                    <div class="sync-actions-row">
+                        <button class="hud-btn" id="btn-export-data"><i data-lucide="download"></i> Exportar JSON</button>
+                        <button class="hud-btn danger-btn" id="btn-reset-data"><i data-lucide="refresh-cw"></i> Redefinir Tudo</button>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="modal-footer">
+                <button class="hud-btn" id="btn-save-settings">Salvar e Fechar</button>
+            </footer>
+        </div>
+    </div>
+    
+    <!-- MODAL DE CRIAÇÃO DE NOVA FACÇÃO (13 COORDENADAS) -->
+    <div class="modal-overlay" id="create-faction-modal">
+        <div class="modal-container" style="width: 800px; max-width: 95%;">
+            <div class="modal-glow"></div>
+            <header class="modal-header">
+                <h3><i data-lucide="plus-circle" style="color: var(--purple-neon)"></i> CADASTRAR NOVA FACÇÃO</h3>
+                <button class="modal-close" id="btn-close-create-modal"><i data-lucide="x"></i></button>
+            </header>
+            
+            <div class="modal-body" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <!-- Coluna 1 -->
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Seção 1: Identificação -->
+                    <div class="config-section">
+                        <h4 class="section-title"><i data-lucide="shield"></i> 1. Identificação Geral</h4>
+                        <div class="form-group">
+                            <label for="new-fac-name">Nome da Facção:</label>
+                            <input type="text" id="new-fac-name" placeholder="Ex: LEGIÃO BLACK" class="hud-input">
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="new-fac-product">Produto / Recurso Principal:</label>
+                            <input type="text" id="new-fac-product" placeholder="Ex: Armas, Munições, Lavagem..." class="hud-input">
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="new-fac-discord">Link do Discord:</label>
+                            <input type="text" id="new-fac-discord" placeholder="discord.gg/invite" class="hud-input">
+                        </div>
+                    </div>
+
+                    <!-- Seção 2: Pontos de QG -->
+                    <div class="config-section">
+                        <h4 class="section-title"><i data-lucide="map-pin"></i> 2. QG & Fabricação</h4>
+                        <div class="form-group">
+                            <label for="new-fac-qg">Coordenadas do QG (CDS QG):</label>
+                            <input type="text" id="new-fac-qg" placeholder="x, y, z, h" class="hud-input">
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="new-fac-craft">Ponto de Craft:</label>
+                            <input type="text" id="new-fac-craft" placeholder="x, y, z, h" class="hud-input">
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="new-fac-utilities">Utilidades:</label>
+                            <input type="text" id="new-fac-utilities" placeholder="x, y, z, h" class="hud-input">
+                        </div>
+                    </div>
+
+                    <!-- Seção 3: Garagens -->
+                    <div class="config-section">
+                        <h4 class="section-title"><i data-lucide="car"></i> 3. Garagens do QG</h4>
+                        <div class="form-group">
+                            <label for="new-fac-garage-personal">Garagem Pessoal:</label>
+                            <input type="text" id="new-fac-garage-personal" placeholder="x, y, z, h" class="hud-input">
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="new-fac-garage-fac">Garagem da Facção:</label>
+                            <input type="text" id="new-fac-garage-fac" placeholder="x, y, z, h" class="hud-input">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna 2 -->
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <!-- Seção 4: Baús Coletivos -->
+                    <div class="config-section">
+                        <h4 class="section-title"><i data-lucide="archive"></i> 4. Baús Coletivos</h4>
+                        <div class="form-group">
+                            <label for="new-fac-chest-leader">Baú do Líder (00):</label>
+                            <input type="text" id="new-fac-chest-leader" placeholder="x, y, z, h" class="hud-input">
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="new-fac-chest-super">Baú do Supervisor (01):</label>
+                            <input type="text" id="new-fac-chest-super" placeholder="x, y, z, h" class="hud-input">
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="new-fac-chest-member">Baú de Membros:</label>
+                            <input type="text" id="new-fac-chest-member" placeholder="x, y, z, h" class="hud-input">
+                        </div>
+                    </div>
+
+                    <!-- Seção 5: Rotas de Farm -->
+                    <div class="config-section">
+                        <h4 class="section-title"><i data-lucide="navigation"></i> 5. Rotas de Farm</h4>
+                        <div class="form-group">
+                            <label for="new-fac-route-farm">Rota de Farm:</label>
+                            <input type="text" id="new-fac-route-farm" placeholder="x, y, z, h" class="hud-input">
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="new-fac-route-delivery">Rota de Entrega:</label>
+                            <input type="text" id="new-fac-route-delivery" placeholder="x, y, z, h" class="hud-input">
+                        </div>
+                    </div>
+
+                    <!-- Seção 6: Farm Comercial -->
+                    <div class="config-section">
+                        <h4 class="section-title"><i data-lucide="coins"></i> 6. Farm Comercial & AFK</h4>
+                        <div class="form-group">
+                            <label for="new-fac-farm-cow">Farm Vaquinha:</label>
+                            <input type="text" id="new-fac-farm-cow" placeholder="x, y, z, h" class="hud-input">
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="new-fac-farm-fishing">Pescaria:</label>
+                            <input type="text" id="new-fac-farm-fishing" placeholder="x, y, z, h" class="hud-input">
+                        </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="new-fac-farm-afk">Farm AFK:</label>
+                            <input type="text" id="new-fac-farm-afk" placeholder="x, y, z, h" class="hud-input">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="modal-footer" style="gap: 15px;">
+                <button class="hud-btn secondary-btn" id="btn-cancel-create">Cancelar</button>
+                <button class="hud-btn success-btn" id="btn-confirm-create"><i data-lucide="check"></i> Confirmar Cadastro</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- MODAL DE LOGIN / AUTENTICAÇÃO DE ID -->
+    <div class="modal-overlay" id="auth-modal">
+        <div class="modal-container" style="width: 450px;">
+            <div class="modal-glow"></div>
+            <header class="modal-header">
+                <h3><i data-lucide="shield-check" style="color: var(--purple-neon)"></i> AUTENTICAÇÃO DO MEMBRO</h3>
+                <button class="modal-close" id="btn-close-auth-modal"><i data-lucide="x"></i></button>
+            </header>
+            
+            <div class="modal-body">
+                <div class="config-section" style="margin-bottom:0;">
+                    <p class="section-desc" style="margin-bottom:15px;">Insira seu <strong>ID de Discord</strong> ou <strong>ID de Cidade</strong> registrado na lista de membros autorizados para liberar permissões de gravação e edição.</p>
+                    
+                    <div class="form-group">
+                        <label for="auth-input-id">ID de Discord ou ID Cidade:</label>
+                        <input type="text" id="auth-input-id" placeholder="Ex: 900303877260320788 ou 104" class="hud-input" style="font-family: var(--font-tech); text-align: center; font-size:16px; letter-spacing:0.1em;">
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="modal-footer" style="gap: 12px;">
+                <button class="hud-btn secondary-btn" id="btn-logout" style="display:none;"><i data-lucide="log-out"></i> Bloquear Acesso</button>
+                <button class="hud-btn success-btn" id="btn-submit-auth"><i data-lucide="unlock"></i> Autenticar</button>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Inicialização do Lucide Icons -->
+    <script>
+        lucide.createIcons();
+    </script>
+    <!-- SDKs do Firebase Realtime Database -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Script de Lógica Principal -->
+    <script src="app.js"></script>
+</body>
+</html>
