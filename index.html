@@ -346,6 +346,11 @@
     <!-- SDKs do Firebase Realtime Database -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <!-- Vercel Speed Insights -->
+    <script type="module">
+        import { injectSpeedInsights } from 'https://cdn.jsdelivr.net/npm/@vercel/speed-insights@2/dist/index.mjs';
+        injectSpeedInsights();
+    </script>
     <!-- Script de Lógica Principal -->
     <script src="app.js"></script>
 </body>
