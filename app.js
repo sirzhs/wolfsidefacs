@@ -305,7 +305,16 @@ async function initFirebase() {
                 
                 if (JSON.stringify(compareData) !== JSON.stringify(compareState)) {
                     console.log("Atualização recebida em tempo real!");
-                    state = data;
+                    // CORREÇÃO: Firebase omite arrays vazios. Garantir que todos os campos
+                    // obrigatórios existam mesclando com o DEFAULT_STATE.
+                    state = {
+                        ...JSON.parse(JSON.stringify(DEFAULT_STATE)),
+                        ...data,
+                        factions: Array.isArray(data.factions) ? data.factions : [],
+                        qgs: Array.isArray(data.qgs) ? data.qgs : [],
+                        sheetsData: (data.sheetsData && typeof data.sheetsData === 'object') ? data.sheetsData : {},
+                        authorizedIds: Array.isArray(data.authorizedIds) ? data.authorizedIds : DEFAULT_STATE.authorizedIds
+                    };
                     state.selectedFaction = currentSelected || data.selectedFaction || "";
                     checkAuthStatus().then(() => {
                         renderAll();
@@ -610,11 +619,10 @@ function renderFactionList() {
     factionListContainer.innerHTML = html;
     lucide.createIcons();
 
-    // Ouvinte para selecionar facção
+    // Ouvinte para selecionar facção (Puramente visual local em memória)
     document.querySelectorAll('.faction-card').forEach(card => {
         card.addEventListener('click', () => {
             state.selectedFaction = card.dataset.fac;
-            saveState();
             renderAll();
         });
     });
@@ -638,7 +646,7 @@ function renderFactionList() {
                         state.selectedFaction = state.factions.length > 0 ? state.factions[0].faccao : '';
                     }
                     
-                    saveState();
+                    saveState(true);
                     renderAll();
                     showToast("Organização excluída com sucesso!");
                 }
@@ -1218,7 +1226,12 @@ btnConfirmCreate.addEventListener('click', () => {
     }
 
     const keyName = name.toUpperCase();
-    
+
+    // Garantia: se o Firebase ainda não devolveu os arrays, inicializa localmente
+    if (!Array.isArray(state.factions))  state.factions  = [];
+    if (!Array.isArray(state.qgs))       state.qgs       = [];
+    if (!state.sheetsData || typeof state.sheetsData !== 'object') state.sheetsData = {};
+
     state.factions.push({
         setor: "LAVAGEM",
         faccao: name,
@@ -1267,7 +1280,7 @@ btnConfirmCreate.addEventListener('click', () => {
     };
 
     state.selectedFaction = name;
-    saveState();
+    saveState(true);
     
     document.querySelectorAll('#create-faction-modal input').forEach(i => i.value = '');
     createFactionModal.classList.remove('active');
@@ -1317,21 +1330,21 @@ btnLogout.addEventListener('click', () => {
 mainTitle.addEventListener('blur', (e) => {
     if (!isAuthenticated) return;
     state.mainTitle = e.target.innerText;
-    saveState();
+    saveState(true);
 });
 mainTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
 
 mainSubtitle.addEventListener('blur', (e) => {
     if (!isAuthenticated) return;
     state.mainSubtitle = e.target.innerHTML;
-    saveState();
+    saveState(true);
 });
 mainSubtitle.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
 
 footerText.addEventListener('blur', (e) => {
     if (!isAuthenticated) return;
     state.footerText = e.target.innerHTML;
-    saveState();
+    saveState(true);
 });
 footerText.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
 
