@@ -1744,5 +1744,108 @@ body::before {
     100% { transform: rotate(360deg); }
 }
 
+/* ============================================================
+   FILTROS DE PAINEL - ABAS DE STATUS
+   ============================================================ */
 
+.faction-filter-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 8px 10px 6px;
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid var(--purple-border);
+    flex-wrap: wrap;
+}
 
+.filter-tab {
+    flex: 1;
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 5px 6px;
+    background: rgba(186, 85, 211, 0.05);
+    border: 1px solid rgba(186, 85, 211, 0.12);
+    border-radius: 6px;
+    color: var(--white-dim);
+    font-family: var(--font-tech);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    white-space: nowrap;
+}
+
+.filter-tab:hover {
+    background: rgba(186, 85, 211, 0.12);
+    border-color: rgba(186, 85, 211, 0.3);
+    color: var(--white-muted);
+}
+
+.filter-tab.active {
+    background: rgba(186, 85, 211, 0.18);
+    border-color: var(--purple-neon);
+    color: var(--purple-neon);
+    box-shadow: 0 0 8px rgba(186, 85, 211, 0.25), inset 0 0 6px rgba(186, 85, 211, 0.08);
+}
+
+.filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: rgba(186, 85, 211, 0.15);
+    border-radius: 20px;
+    font-size: 8px;
+    font-weight: 700;
+    color: inherit;
+    transition: var(--transition-smooth);
+}
+
+.filter-tab.active .filter-count {
+    background: rgba(186, 85, 211, 0.3);
+    box-shadow: 0 0 4px rgba(186, 85, 211, 0.4);
+}
+
+/* Cores especiais por filtro */
+.filter-tab[data-filter="ativas"].active {
+    border-color: #00ffaa;
+    color: #00ffaa;
+    box-shadow: 0 0 8px rgba(0, 255, 170, 0.2), inset 0 0 6px rgba(0, 255, 170, 0.05);
+}
+.filter-tab[data-filter="ativas"].active .filter-count {
+    background: rgba(0, 255, 170, 0.15);
+}
+
+.filter-tab[data-filter="livres"].active {
+    border-color: #ffcc00;
+    color: #ffcc00;
+    box-shadow: 0 0 8px rgba(255, 204, 0, 0.2), inset 0 0 6px rgba(255, 204, 0, 0.05);
+}
+.filter-tab[data-filter="livres"].active .filter-count {
+    background: rgba(255, 204, 0, 0.15);
+}
+
+.filter-tab[data-filter="comerciais"].active {
+    border-color: #ff9933;
+    color: #ff9933;
+    box-shadow: 0 0 8px rgba(255, 153, 51, 0.2), inset 0 0 6px rgba(255, 153, 51, 0.05);
+}
+.filter-tab[data-filter="comerciais"].active .filter-count {
+    background: rgba(255, 153, 51, 0.15);
+}
+
+@media (max-width: 768px) {
+    .faction-filter-tabs {
+        gap: 3px;
+        padding: 6px 8px 5px;
+    }
+    .filter-tab {
+        font-size: 8px;
+        padding: 4px 5px;
+    }
+}

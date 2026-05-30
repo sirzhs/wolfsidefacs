@@ -81,6 +81,7 @@ const btnResetData = document.getElementById('btn-reset-data');
 
 // Estado das abas e pesquisas
 let factionSearchQuery = '';
+let factionFilterActive = 'all'; // 'all' | 'ativas' | 'livres' | 'comerciais'
 let syncTimeout = null;
 
 // Helper de Configuração do Firebase
@@ -562,21 +563,73 @@ excelFileInput.addEventListener('change', (e) => { handleExcelFile(e.target.file
 // 6. MOTOR DE RENDERIZAÇÃO
 // ----------------------------------------------------
 
+// Garante integridade de todos os arrays/objetos do state antes de qualquer renderização
+function normalizeState() {
+    if (!Array.isArray(state.factions))   state.factions   = [];
+    if (!Array.isArray(state.qgs))        state.qgs        = [];
+    if (!Array.isArray(state.authorizedIds)) state.authorizedIds = DEFAULT_STATE.authorizedIds;
+    if (!state.sheetsData || typeof state.sheetsData !== 'object') state.sheetsData = {};
+    // Garante que cada entrada de sheetsData tenha members e customCoords como arrays
+    Object.keys(state.sheetsData).forEach(key => {
+        const d = state.sheetsData[key];
+        if (!d) { state.sheetsData[key] = {}; return; }
+        if (!Array.isArray(d.members))      d.members      = [];
+        if (!Array.isArray(d.customCoords)) d.customCoords = [];
+    });
+}
+
 function renderTitles() {
-    mainTitle.innerText = state.mainTitle;
-    mainSubtitle.innerHTML = state.mainSubtitle;
-    footerText.innerHTML = state.footerText;
+    normalizeState();
+    mainTitle.innerText = state.mainTitle || '';
+    mainSubtitle.innerHTML = state.mainSubtitle || '';
+    footerText.innerHTML = state.footerText || '';
     activeModeTag.innerText = `FACÇÕES: ${state.factions.length}`;
 }
 
 function renderFactionList() {
     const query = factionSearchQuery.toLowerCase();
-    const filteredFactions = state.factions.filter(f => {
-        return (
+    const facs = Array.isArray(state.factions) ? state.factions : [];
+
+    // Atualiza contadores das abas
+    const countAll      = facs.length;
+    const countAtivas   = facs.filter(f => f.lider && f.lider.trim() !== '' && f.lider.toUpperCase() !== 'LIVRE').length;
+    const countLivres   = facs.filter(f => !f.lider || f.lider.trim() === '' || f.lider.toUpperCase() === 'LIVRE').length;
+    const countComerc   = facs.filter(f => {
+        const prod = (f.cds || '').toLowerCase();
+        const qgInfo = Array.isArray(state.qgs) ? state.qgs.find(q => (q.faccao||'').trim().toUpperCase() === (f.faccao||'').trim().toUpperCase()) : null;
+        const prodQg = qgInfo ? (qgInfo.prod || '').toLowerCase() : '';
+        const combined = prod + ' ' + prodQg;
+        return combined.includes('lavagem') || combined.includes('comér') || combined.includes('comerci') || combined.includes('drogas') || combined.includes('armas') || combined.includes('munição') || combined.includes('munições');
+    }).length;
+
+    const elAll  = document.getElementById('count-all');      if (elAll)  elAll.innerText  = countAll;
+    const elAtiv = document.getElementById('count-ativas');   if (elAtiv) elAtiv.innerText = countAtivas;
+    const elLiv  = document.getElementById('count-livres');   if (elLiv)  elLiv.innerText  = countLivres;
+    const elCom  = document.getElementById('count-comerciais'); if (elCom) elCom.innerText = countComerc;
+
+    // Aplica filtro de aba + pesquisa de texto
+    const filteredFactions = facs.filter(f => {
+        const matchText = (
             (f.faccao || '').toLowerCase().includes(query) ||
-            (f.lider || '').toLowerCase().includes(query) ||
-            (f.setor || '').toLowerCase().includes(query)
+            (f.lider  || '').toLowerCase().includes(query) ||
+            (f.setor  || '').toLowerCase().includes(query)
         );
+        if (!matchText) return false;
+
+        if (factionFilterActive === 'ativas') {
+            return f.lider && f.lider.trim() !== '' && f.lider.toUpperCase() !== 'LIVRE';
+        }
+        if (factionFilterActive === 'livres') {
+            return !f.lider || f.lider.trim() === '' || f.lider.toUpperCase() === 'LIVRE';
+        }
+        if (factionFilterActive === 'comerciais') {
+            const prod = (f.cds || '').toLowerCase();
+            const qgInfo = Array.isArray(state.qgs) ? state.qgs.find(q => (q.faccao||'').trim().toUpperCase() === (f.faccao||'').trim().toUpperCase()) : null;
+            const prodQg = qgInfo ? (qgInfo.prod || '').toLowerCase() : '';
+            const combined = prod + ' ' + prodQg;
+            return combined.includes('lavagem') || combined.includes('comér') || combined.includes('comerci') || combined.includes('drogas') || combined.includes('armas') || combined.includes('munição') || combined.includes('munições');
+        }
+        return true;
     });
 
     let html = '';
@@ -593,23 +646,44 @@ function renderFactionList() {
             if (f.status === 'ENTREGUE') badgeClass = 'badge-entregue';
             if (f.status === 'AGUARDANDO') badgeClass = 'badge-aguardando';
             
-            const qgInfo = state.qgs.find(q => q.faccao.trim().toUpperCase() === f.faccao.trim().toUpperCase());
+            const qgInfo = Array.isArray(state.qgs) ? state.qgs.find(q => q.faccao.trim().toUpperCase() === f.faccao.trim().toUpperCase()) : null;
             const resource = qgInfo ? qgInfo.prod : f.cds || 'RECURSOS';
+
+            // Pega o nome do líder: primeiro do sheetsData (rank 00), depois do próprio objeto
+            const sheetKey = f.faccao.trim().toUpperCase();
+            const sheetData = state.sheetsData && state.sheetsData[sheetKey];
+            const liderFromSheet = sheetData && Array.isArray(sheetData.members)
+                ? (sheetData.members.find(m => m.rank === '00') || {}).name || ''
+                : '';
+            const liderName = liderFromSheet || f.lider || '';
+            const isAtiva = liderName && liderName.toUpperCase() !== 'LIVRE' && liderName.trim() !== '';
+
+            // Ícone e label do botão de toggle
+            const nextStatus   = f.status === 'ENTREGUE' ? 'LIVRE' : 'ENTREGUE';
+            const toggleIcon   = f.status === 'ENTREGUE' ? 'unlock' : 'check-circle';
+            const toggleTitle  = f.status === 'ENTREGUE' ? 'Marcar como LIVRE' : 'Marcar como ENTREGUE';
+            const toggleColor  = f.status === 'ENTREGUE' ? '#ffcc00' : '#00ffaa';
 
             html += `
                 <div class="faction-card ${isSelected ? 'active' : ''}" data-fac="${f.faccao}">
                     <div class="faction-card-header">
                         <span class="faction-card-name">${f.faccao}</span>
-                        <div style="display: flex; align-items: center; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
                             <span class="badge ${badgeClass}">${f.status}</span>
                             ${isAuthenticated ? `
+                            <button class="panel-btn btn-toggle-status" data-fac="${f.faccao}" data-next="${nextStatus}" style="border:none; background:transparent; width:20px; height:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="${toggleTitle}">
+                                <i data-lucide="${toggleIcon}" style="width:12px; height:12px; color: ${toggleColor};"></i>
+                            </button>
                             <button class="panel-btn btn-delete-faction" data-fac="${f.faccao}" style="border:none; background:transparent; color:rgba(255,255,255,0.4); width:20px; height:20px; cursor:pointer;" title="Excluir Organização">
                                 <i data-lucide="trash-2" style="width:12px; height:12px; color: #ff3366;"></i>
                             </button>` : ''}
                         </div>
                     </div>
                     <div class="faction-card-meta">
-                        <span>Líder: <strong>${f.lider || 'LIVRE'}</strong></span>
+                        <span style="display:flex; align-items:center; gap:5px;">
+                            <i data-lucide="user" style="width:10px;height:10px; color:${isAtiva ? '#00ffaa' : '#ff3366'};"></i>
+                            <span style="color:${isAtiva ? 'var(--white-muted)' : '#ff3366'}; font-weight:${isAtiva ? '700' : '600'}">${isAtiva ? liderName : 'LIVRE'}</span>
+                        </span>
                         <span>Tipo: <strong style="color: var(--purple-neon)">${resource}</strong></span>
                     </div>
                 </div>`;
@@ -631,7 +705,7 @@ function renderFactionList() {
     if (isAuthenticated) {
         document.querySelectorAll('.btn-delete-faction').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                e.stopPropagation(); // Evita que clique no botão selecione a facção
+                e.stopPropagation();
                 const facName = e.currentTarget.dataset.fac;
                 
                 if (confirm(`ATENÇÃO: Deseja realmente excluir permanentemente a organização "${facName}" e todos os seus dados?`)) {
@@ -649,6 +723,25 @@ function renderFactionList() {
                     saveState(true);
                     renderAll();
                     showToast("Organização excluída com sucesso!");
+                }
+            });
+        });
+
+        // Ouvinte para alternar status LIVRE <-> ENTREGUE
+        document.querySelectorAll('.btn-toggle-status').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const facName  = e.currentTarget.dataset.fac;
+                const nextSt   = e.currentTarget.dataset.next;
+                const facIndex = state.factions.findIndex(f => f.faccao.trim().toUpperCase() === facName.trim().toUpperCase());
+                if (facIndex !== -1) {
+                    state.factions[facIndex].status = nextSt;
+                    // Sincroniza também no qgs se existir
+                    const qgIndex = state.qgs.findIndex(q => q.faccao.trim().toUpperCase() === facName.trim().toUpperCase());
+                    if (qgIndex !== -1) state.qgs[qgIndex].status = nextSt;
+                    saveState(true);
+                    renderAll();
+                    showToast(`${facName} marcada como ${nextSt}!`);
                 }
             });
         });
@@ -1007,6 +1100,8 @@ function renderFactionWorkspace() {
             const mIdx = parseInt(e.target.dataset.index);
             const field = e.target.dataset.field;
             const activeKey = state.selectedFaction.trim().toUpperCase();
+            if (!state.sheetsData[activeKey] || !Array.isArray(state.sheetsData[activeKey].members)) return;
+            if (!state.sheetsData[activeKey].members[mIdx]) return;
             state.sheetsData[activeKey].members[mIdx][field] = e.target.value;
             saveState();
         });
@@ -1112,15 +1207,25 @@ function renderFactionWorkspace() {
         btnAddMember.addEventListener('click', () => {
             if (!isAuthenticated) return;
             const activeKey = state.selectedFaction.trim().toUpperCase();
+
+            // Verifica se a facção existe no objeto de dados
+            if (!state.sheetsData[activeKey]) {
+                console.error(`Facção "${activeKey}" não encontrada em sheetsData. Criando entrada...`);
+                state.sheetsData[activeKey] = { members: [], customCoords: [] };
+            }
+            if (!Array.isArray(state.sheetsData[activeKey].members)) {
+                state.sheetsData[activeKey].members = [];
+            }
+
             const nextRank = String(state.sheetsData[activeKey].members.length).padStart(2, '0');
-            
+
             state.sheetsData[activeKey].members.push({
                 rank: nextRank,
                 name: "Novo Membro",
                 discordId: "ID Discord",
                 cityId: "ID"
             });
-            
+
             saveState();
             renderAll();
             showToast("Slot de membro adicionado!");
@@ -1134,6 +1239,7 @@ function renderFactionWorkspace() {
             const targetBtn = e.target.closest('.btn-delete-member');
             const mIdx = parseInt(targetBtn.dataset.index);
             const activeKey = state.selectedFaction.trim().toUpperCase();
+            if (!state.sheetsData[activeKey] || !Array.isArray(state.sheetsData[activeKey].members)) return;
             
             if (confirm("Remover este membro do QG?")) {
                 state.sheetsData[activeKey].members.splice(mIdx, 1);
@@ -1152,6 +1258,7 @@ function renderFactionWorkspace() {
             const inp = document.getElementById('new-auth-id-input');
             const idVal = inp.value.trim();
             if (!idVal) return;
+            if (!Array.isArray(state.authorizedIds)) state.authorizedIds = [];
             
             if (!state.authorizedIds.includes(idVal)) {
                 state.authorizedIds.push(idVal);
@@ -1169,6 +1276,7 @@ function renderFactionWorkspace() {
         btn.addEventListener('click', (e) => {
             if (!isAuthenticated) return;
             const id = e.target.dataset.id;
+            if (!Array.isArray(state.authorizedIds)) return;
             
             if (confirm(`Remover autorização do ID ${id}?`)) {
                 state.authorizedIds = state.authorizedIds.filter(x => x !== id);
@@ -1326,32 +1434,22 @@ btnLogout.addEventListener('click', () => {
     }
 });
 
-// Ouvintes de Configurações do Cabeçalho e Título
-mainTitle.addEventListener('blur', (e) => {
-    if (!isAuthenticated) return;
-    state.mainTitle = e.target.innerText;
-    saveState(true);
-});
-mainTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
-
-mainSubtitle.addEventListener('blur', (e) => {
-    if (!isAuthenticated) return;
-    state.mainSubtitle = e.target.innerHTML;
-    saveState(true);
-});
-mainSubtitle.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
-
-footerText.addEventListener('blur', (e) => {
-    if (!isAuthenticated) return;
-    state.footerText = e.target.innerHTML;
-    saveState(true);
-});
-footerText.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); } });
+// Título, subtítulo e rodapé travados (não editáveis)
 
 // Ouvinte de pesquisa da Sidebar
 factionSearchInput.addEventListener('input', (e) => {
     factionSearchQuery = e.target.value;
     renderFactionList();
+});
+
+// Ouvintes das abas de filtro
+document.querySelectorAll('.filter-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        factionFilterActive = tab.dataset.filter;
+        document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        renderFactionList();
+    });
 });
 
 // Botão Adicionar Facção na Sidebar

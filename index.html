@@ -50,8 +50,8 @@
         <main class="hud-main">
             <!-- Título Principal Centralizado -->
             <div class="title-container">
-                <h1 id="main-title" contenteditable="true" spellcheck="false">WOLFSIDE ROLEPLAY</h1>
-                <p id="main-subtitle" contenteditable="true" spellcheck="false">PAINEL INFORMATIVO DO SERVIDOR &bull; EDITE ESTE SUBTÍTULO</p>
+                <h1 id="main-title" spellcheck="false">WOLFSIDE ROLEPLAY</h1>
+                <p id="main-subtitle" spellcheck="false">PAINEL INFORMATIVO DO SERVIDOR &bull; EDITE ESTE SUBTÍTULO</p>
                 <div class="title-underline">
                     <div class="underline-glow"></div>
                 </div>
@@ -76,10 +76,30 @@
                                     <input type="text" id="faction-search" class="hud-search-input" placeholder="Pesquisar facção...">
                                 </div>
                             </div>
+                            <!-- FILTROS DE PAINEL -->
+                            <div class="faction-filter-tabs" id="faction-filter-tabs">
+                                <button class="filter-tab active" data-filter="all">
+                                    <i data-lucide="layout-grid" style="width:11px;height:11px;"></i>
+                                    TODAS <span class="filter-count" id="count-all">0</span>
+                                </button>
+                                <button class="filter-tab" data-filter="ativas">
+                                    <i data-lucide="check-circle" style="width:11px;height:11px;"></i>
+                                    ATIVAS <span class="filter-count" id="count-ativas">0</span>
+                                </button>
+                                <button class="filter-tab" data-filter="livres">
+                                    <i data-lucide="unlock" style="width:11px;height:11px;"></i>
+                                    LIVRES <span class="filter-count" id="count-livres">0</span>
+                                </button>
+                                <button class="filter-tab" data-filter="comerciais">
+                                    <i data-lucide="coins" style="width:11px;height:11px;"></i>
+                                    COMERC. <span class="filter-count" id="count-comerciais">0</span>
+                                </button>
+                            </div>
                             <div class="faction-cards-container" id="faction-list-container">
                                 <!-- Cards renderizados via JS -->
                             </div>
                         </aside>
+
                         
                         <!-- Workspace Direito: Detalhes da Facção Selecionada -->
                         <main class="console-workspace" id="console-workspace-area">
@@ -96,7 +116,7 @@
                 <span class="footer-tag">AAA INTERFACE // TERMINAL RP</span>
             </div>
             <div class="footer-center">
-                <span id="footer-text" contenteditable="true" spellcheck="false">&copy; 2026 WOLFSIDE RP - TODOS OS DIREITOS RESERVADOS. PROMPT E TEMPLATE EDITÁVEIS.</span>
+                <span id="footer-text">&copy; 2026 WOLFSIDE RP - TODOS OS DIREITOS RESERVADOS.</span>
             </div>
             <div class="footer-right">
                 <span class="footer-version" id="footer-time">00:00:00 UTC</span>
