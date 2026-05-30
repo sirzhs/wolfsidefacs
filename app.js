@@ -594,13 +594,7 @@ function renderFactionList() {
     const countAll       = facs.length;
     const countLivres    = facs.filter(f => (f.status || 'LIVRE').toUpperCase() === 'LIVRE').length;
     const countEntregues = facs.filter(f => (f.status || '').toUpperCase() === 'ENTREGUE').length;
-    const countComerc    = facs.filter(f => {
-        const prod = (f.cds || '').toLowerCase();
-        const qgInfo = Array.isArray(state.qgs) ? state.qgs.find(q => (q.faccao||'').trim().toUpperCase() === (f.faccao||'').trim().toUpperCase()) : null;
-        const prodQg = qgInfo ? (qgInfo.prod || '').toLowerCase() : '';
-        const combined = prod + ' ' + prodQg;
-        return combined.includes('lavagem') || combined.includes('comér') || combined.includes('comerci') || combined.includes('drogas') || combined.includes('armas') || combined.includes('munição') || combined.includes('munições');
-    }).length;
+    const countComerc    = facs.filter(f => (f.tipo || 'NORMAL').toUpperCase() === 'COMERCIAL').length;
 
     const elAll  = document.getElementById('count-all');       if (elAll)  elAll.innerText  = countAll;
     const elLiv  = document.getElementById('count-livres');    if (elLiv)  elLiv.innerText  = countLivres;
@@ -623,11 +617,7 @@ function renderFactionList() {
             return (f.status || '').toUpperCase() === 'ENTREGUE';
         }
         if (factionFilterActive === 'comerciais') {
-            const prod = (f.cds || '').toLowerCase();
-            const qgInfo = Array.isArray(state.qgs) ? state.qgs.find(q => (q.faccao||'').trim().toUpperCase() === (f.faccao||'').trim().toUpperCase()) : null;
-            const prodQg = qgInfo ? (qgInfo.prod || '').toLowerCase() : '';
-            const combined = prod + ' ' + prodQg;
-            return combined.includes('lavagem') || combined.includes('comér') || combined.includes('comerci') || combined.includes('drogas') || combined.includes('armas') || combined.includes('munição') || combined.includes('munições');
+            return (f.tipo || 'NORMAL').toUpperCase() === 'COMERCIAL';
         }
         return true;
     });
@@ -671,6 +661,7 @@ function renderFactionList() {
                         <span class="faction-card-name">${f.faccao}</span>
                         <div style="display: flex; align-items: center; gap: 6px;">
                             <span class="badge ${badgeClass}">${status}</span>
+                            ${(f.tipo || 'NORMAL').toUpperCase() === 'COMERCIAL' ? '<span class="badge" style="background:rgba(255,153,51,0.15);color:#ff9933;border-color:#ff9933;font-size:8px;padding:2px 5px;letter-spacing:0.05em;">COMERC.</span>' : ''}
                             ${isAuthenticated ? `
                             <button class="panel-btn btn-toggle-status" data-fac="${f.faccao}" data-next="${nextStatus}" style="border:none; background:transparent; width:20px; height:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="${toggleTitle}">
                                 <i data-lucide="${toggleIcon}" style="width:12px; height:12px; color: ${toggleColor};"></i>
@@ -734,6 +725,10 @@ function renderFactionList() {
                 document.getElementById('new-fac-farm-cow').value     = sheetData.farmCow || '';
                 document.getElementById('new-fac-farm-fishing').value = sheetData.farmFishing || '';
                 document.getElementById('new-fac-farm-afk').value     = sheetData.farmAfk || '';
+                const tipoSel = document.getElementById('new-fac-tipo');
+                if (tipoSel) tipoSel.value = (fac.tipo || sheetData.tipo || 'NORMAL');
+                const obsArea = document.getElementById('new-fac-obs');
+                if (obsArea) obsArea.value = sheetData.obs || '';
 
                 // Muda título do modal para indicar edição
                 document.querySelector('#create-faction-modal .modal-header h3').innerHTML =
@@ -863,11 +858,16 @@ function renderFactionWorkspace() {
             <!-- Cabeçalho do Workspace -->
             <div class="detail-header-block" style="flex-shrink: 0; padding-bottom: 12px; margin-bottom: 0;">
                 <div class="detail-title-area">
-                    <h3>${details.title}</h3>
+                    <h3>${details.title}${(details.tipo||'').toUpperCase()==='COMERCIAL' ? ' <span style="font-size:10px;background:rgba(255,153,51,0.15);color:#ff9933;border:1px solid #ff9933;border-radius:4px;padding:2px 7px;font-family:var(--font-tech);vertical-align:middle;letter-spacing:0.08em;">COMERCIAL</span>' : ''}</h3>
                     <p>// DETALHES DE SEGURANÇA E OPERAÇÃO</p>
                 </div>
                 ${details.discord ? `<a href="${details.discord.startsWith('http') ? details.discord : 'https://' + details.discord}" target="_blank" class="detail-discord-link"><i data-lucide="external-link"></i> DISCORD QG</a>` : ''}
             </div>
+            ${details.obs ? `
+            <div style="flex-shrink:0;padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;">
+                <div style="font-size:9px;font-family:var(--font-tech);color:var(--purple-neon);letter-spacing:0.1em;margin-bottom:6px;display:flex;align-items:center;gap:5px;"><i data-lucide="notebook-pen" style="width:11px;height:11px;"></i> OBSERVAÇÕES</div>
+                <p style="font-size:12px;color:var(--white-muted);line-height:1.6;white-space:pre-wrap;margin:0;">${details.obs}</p>
+            </div>` : ''}
 
             <!-- Conteúdo em Duas Colunas -->
             <div class="faction-detail-grid" style="display: grid; grid-template-columns: 1.25fr 1fr; gap: 20px; flex-grow: 1; min-height: 0; overflow: hidden;">
@@ -1345,6 +1345,10 @@ function renderAll() {
 function resetCreateModal() {
     delete btnConfirmCreate.dataset.editingFac;
     document.querySelectorAll('#create-faction-modal input').forEach(i => i.value = '');
+    const _obsReset = document.getElementById('new-fac-obs');
+    if (_obsReset) _obsReset.value = '';
+    const _tipoReset = document.getElementById('new-fac-tipo');
+    if (_tipoReset) _tipoReset.value = 'NORMAL';
     const modalTitle = document.querySelector('#create-faction-modal .modal-header h3');
     if (modalTitle) {
         modalTitle.innerHTML = '<i data-lucide="plus-circle" style="color:var(--purple-neon)"></i> CADASTRAR NOVA FACÇÃO';
@@ -1380,6 +1384,10 @@ btnConfirmCreate.addEventListener('click', () => {
     const farmCow = document.getElementById('new-fac-farm-cow').value.trim();
     const farmFish = document.getElementById('new-fac-farm-fishing').value.trim();
     const farmAfk = document.getElementById('new-fac-farm-afk').value.trim();
+    const tipoEl = document.getElementById('new-fac-tipo');
+    const tipo = tipoEl ? tipoEl.value : 'NORMAL';
+    const obsEl = document.getElementById('new-fac-obs');
+    const obs = obsEl ? obsEl.value.trim() : '';
 
     if (!name) {
         alert("Por favor, insira o nome da facção!");
@@ -1398,7 +1406,8 @@ btnConfirmCreate.addEventListener('click', () => {
         // ── MODO EDIÇÃO: sobrescreve dados da fac existente ──
         const facIdx = state.factions.findIndex(f => f.faccao.trim().toUpperCase() === editingFac);
         if (facIdx !== -1) {
-            state.factions[facIdx].cds = product;
+            state.factions[facIdx].cds  = product;
+            state.factions[facIdx].tipo = tipo;
         }
         const qgIdx = state.qgs.findIndex(q => q.faccao.trim().toUpperCase() === editingFac);
         if (qgIdx !== -1) {
@@ -1424,6 +1433,8 @@ btnConfirmCreate.addEventListener('click', () => {
             farmCow: farmCow,
             farmFishing: farmFish,
             farmAfk: farmAfk,
+            tipo: tipo,
+            obs: obs,
         };
         // Reset título e botão para modo criação
         document.querySelector('#create-faction-modal .modal-header h3').innerHTML =
@@ -1443,6 +1454,7 @@ btnConfirmCreate.addEventListener('click', () => {
             id: "",
             status: "LIVRE",
             cds: product,
+            tipo: tipo,
             inicial: "0"
         });
 
@@ -1477,6 +1489,8 @@ btnConfirmCreate.addEventListener('click', () => {
             tacticalRadio: "100",
             operationalRadio: "101",
             generalRadio: "102",
+            tipo: tipo,
+            obs: obs,
             members: []
         };
         state.selectedFaction = name;
@@ -1485,6 +1499,10 @@ btnConfirmCreate.addEventListener('click', () => {
     saveState(true);
     
     document.querySelectorAll('#create-faction-modal input').forEach(i => i.value = '');
+    const obsField = document.getElementById('new-fac-obs');
+    if (obsField) obsField.value = '';
+    const tipoField = document.getElementById('new-fac-tipo');
+    if (tipoField) tipoField.value = 'NORMAL';
     createFactionModal.classList.remove('active');
     
     renderAll();

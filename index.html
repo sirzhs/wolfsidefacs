@@ -82,13 +82,13 @@
                                     <i data-lucide="layout-grid" style="width:11px;height:11px;"></i>
                                     TODAS <span class="filter-count" id="count-all">0</span>
                                 </button>
-                                <button class="filter-tab" data-filter="ativas">
-                                    <i data-lucide="check-circle" style="width:11px;height:11px;"></i>
-                                    ATIVAS <span class="filter-count" id="count-ativas">0</span>
-                                </button>
                                 <button class="filter-tab" data-filter="livres">
                                     <i data-lucide="unlock" style="width:11px;height:11px;"></i>
                                     LIVRES <span class="filter-count" id="count-livres">0</span>
+                                </button>
+                                <button class="filter-tab" data-filter="entregues">
+                                    <i data-lucide="check-circle" style="width:11px;height:11px;"></i>
+                                    ENTREGUES <span class="filter-count" id="count-entregues">0</span>
                                 </button>
                                 <button class="filter-tab" data-filter="comerciais">
                                     <i data-lucide="coins" style="width:11px;height:11px;"></i>
@@ -221,6 +221,13 @@
                             <label for="new-fac-discord">Link do Discord:</label>
                             <input type="text" id="new-fac-discord" placeholder="discord.gg/invite" class="hud-input">
                         </div>
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label for="new-fac-tipo">Tipo da Organização:</label>
+                            <select id="new-fac-tipo" class="hud-input" style="cursor:pointer;">
+                                <option value="NORMAL">🏢 Normal (Org. Padrão)</option>
+                                <option value="COMERCIAL">🛒 Comercial</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Seção 2: Pontos de QG -->
@@ -304,7 +311,16 @@
                     </div>
                 </div>
             </div>
-            
+
+            <!-- Seção OBS: Observações Gerais (largura total) -->
+            <div class="config-section" style="margin-top: 5px;">
+                <h4 class="section-title"><i data-lucide="notebook-pen"></i> 7. Observações / Notas Internas</h4>
+                <div class="form-group">
+                    <label for="new-fac-obs">Observações sobre a Facção:</label>
+                    <textarea id="new-fac-obs" class="hud-input" placeholder="Anotações internas, avisos, histórico de liderança, pendências..." rows="3" style="resize: vertical; min-height: 70px; font-family: var(--font-primary); font-size: 13px; line-height: 1.5;"></textarea>
+                </div>
+            </div>
+
             <footer class="modal-footer" style="gap: 15px;">
                 <button class="hud-btn secondary-btn" id="btn-cancel-create">Cancelar</button>
                 <button class="hud-btn success-btn" id="btn-confirm-create"><i data-lucide="check"></i> Confirmar Cadastro</button>
