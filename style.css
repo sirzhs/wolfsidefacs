@@ -722,17 +722,17 @@ body::before {
 }
 
 .badge-entregue {
-    background: rgba(0, 255, 170, 0.12);
-    border: 1px solid rgba(0, 255, 170, 0.4);
-    color: #00ffaa;
-    text-shadow: 0 0 5px rgba(0, 255, 170, 0.3);
+    background: rgba(255, 51, 102, 0.12);
+    border: 1px solid rgba(255, 51, 102, 0.45);
+    color: #ff3366;
+    text-shadow: 0 0 5px rgba(255, 51, 102, 0.4);
 }
 
 .badge-livre {
-    background: rgba(186, 85, 211, 0.12);
-    border: 1px solid var(--purple-border-hover);
-    color: var(--purple-neon);
-    text-shadow: 0 0 5px var(--purple-glow);
+    background: rgba(0, 255, 170, 0.1);
+    border: 1px solid rgba(0, 255, 170, 0.4);
+    color: #00ffaa;
+    text-shadow: 0 0 5px rgba(0, 255, 170, 0.3);
 }
 
 .badge-aguardando {
@@ -1512,8 +1512,9 @@ body::before {
 .coord-label {
     font-family: var(--font-tech);
     font-size: 11px;
-    color: var(--white-dim);
+    color: rgba(255, 255, 255, 0.85);
     letter-spacing: 0.08em;
+    text-shadow: 0 0 6px rgba(255,255,255,0.2);
 }
 
 .coord-val {
@@ -1611,9 +1612,9 @@ body::before {
 .coords-group-title {
     font-family: var(--font-tech);
     font-size: 11px;
-    color: var(--purple-neon);
+    color: rgba(255, 255, 255, 0.9);
     letter-spacing: 0.15em;
-    border-bottom: 1px dashed rgba(186, 85, 211, 0.25);
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.15);
     padding-bottom: 5px;
     margin-top: 15px;
     margin-bottom: 10px;
@@ -1622,12 +1623,21 @@ body::before {
     display: flex;
     align-items: center;
     gap: 8px;
-    text-shadow: 0 0 4px var(--purple-glow);
+    text-shadow: 0 0 8px rgba(255,255,255,0.3);
 }
 
 .coords-group-title i {
     width: 12px;
     height: 12px;
+    color: var(--purple-neon);
+}
+
+/* Rank dos membros em branco neon */
+.member-rank-cell {
+    font-family: var(--font-tech);
+    color: rgba(255,255,255,0.9) !important;
+    font-weight: bold;
+    text-shadow: 0 0 6px rgba(255,255,255,0.3);
 }
 
 /* Área de controle de autenticação ativa e pulsante */
@@ -1812,22 +1822,22 @@ body::before {
 }
 
 /* Cores especiais por filtro */
-.filter-tab[data-filter="ativas"].active {
+.filter-tab[data-filter="livres"].active {
     border-color: #00ffaa;
     color: #00ffaa;
     box-shadow: 0 0 8px rgba(0, 255, 170, 0.2), inset 0 0 6px rgba(0, 255, 170, 0.05);
 }
-.filter-tab[data-filter="ativas"].active .filter-count {
+.filter-tab[data-filter="livres"].active .filter-count {
     background: rgba(0, 255, 170, 0.15);
 }
 
-.filter-tab[data-filter="livres"].active {
-    border-color: #ffcc00;
-    color: #ffcc00;
-    box-shadow: 0 0 8px rgba(255, 204, 0, 0.2), inset 0 0 6px rgba(255, 204, 0, 0.05);
+.filter-tab[data-filter="entregues"].active {
+    border-color: #ff3366;
+    color: #ff3366;
+    box-shadow: 0 0 8px rgba(255, 51, 102, 0.2), inset 0 0 6px rgba(255, 51, 102, 0.05);
 }
-.filter-tab[data-filter="livres"].active .filter-count {
-    background: rgba(255, 204, 0, 0.15);
+.filter-tab[data-filter="entregues"].active .filter-count {
+    background: rgba(255, 51, 102, 0.15);
 }
 
 .filter-tab[data-filter="comerciais"].active {

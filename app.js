@@ -81,7 +81,7 @@ const btnResetData = document.getElementById('btn-reset-data');
 
 // Estado das abas e pesquisas
 let factionSearchQuery = '';
-let factionFilterActive = 'all'; // 'all' | 'ativas' | 'livres' | 'comerciais'
+let factionFilterActive = 'all'; // 'all' | 'livres' | 'entregues' | 'comerciais'
 let syncTimeout = null;
 
 // Helper de Configuração do Firebase
@@ -590,11 +590,11 @@ function renderFactionList() {
     const query = factionSearchQuery.toLowerCase();
     const facs = Array.isArray(state.factions) ? state.factions : [];
 
-    // Atualiza contadores das abas
-    const countAll      = facs.length;
-    const countAtivas   = facs.filter(f => f.lider && f.lider.trim() !== '' && f.lider.toUpperCase() !== 'LIVRE').length;
-    const countLivres   = facs.filter(f => !f.lider || f.lider.trim() === '' || f.lider.toUpperCase() === 'LIVRE').length;
-    const countComerc   = facs.filter(f => {
+    // Contadores por status real do campo f.status
+    const countAll       = facs.length;
+    const countLivres    = facs.filter(f => (f.status || 'LIVRE').toUpperCase() === 'LIVRE').length;
+    const countEntregues = facs.filter(f => (f.status || '').toUpperCase() === 'ENTREGUE').length;
+    const countComerc    = facs.filter(f => {
         const prod = (f.cds || '').toLowerCase();
         const qgInfo = Array.isArray(state.qgs) ? state.qgs.find(q => (q.faccao||'').trim().toUpperCase() === (f.faccao||'').trim().toUpperCase()) : null;
         const prodQg = qgInfo ? (qgInfo.prod || '').toLowerCase() : '';
@@ -602,10 +602,10 @@ function renderFactionList() {
         return combined.includes('lavagem') || combined.includes('comér') || combined.includes('comerci') || combined.includes('drogas') || combined.includes('armas') || combined.includes('munição') || combined.includes('munições');
     }).length;
 
-    const elAll  = document.getElementById('count-all');      if (elAll)  elAll.innerText  = countAll;
-    const elAtiv = document.getElementById('count-ativas');   if (elAtiv) elAtiv.innerText = countAtivas;
-    const elLiv  = document.getElementById('count-livres');   if (elLiv)  elLiv.innerText  = countLivres;
-    const elCom  = document.getElementById('count-comerciais'); if (elCom) elCom.innerText = countComerc;
+    const elAll  = document.getElementById('count-all');       if (elAll)  elAll.innerText  = countAll;
+    const elLiv  = document.getElementById('count-livres');    if (elLiv)  elLiv.innerText  = countLivres;
+    const elEnt  = document.getElementById('count-entregues'); if (elEnt)  elEnt.innerText  = countEntregues;
+    const elCom  = document.getElementById('count-comerciais'); if (elCom) elCom.innerText  = countComerc;
 
     // Aplica filtro de aba + pesquisa de texto
     const filteredFactions = facs.filter(f => {
@@ -616,11 +616,11 @@ function renderFactionList() {
         );
         if (!matchText) return false;
 
-        if (factionFilterActive === 'ativas') {
-            return f.lider && f.lider.trim() !== '' && f.lider.toUpperCase() !== 'LIVRE';
-        }
         if (factionFilterActive === 'livres') {
-            return !f.lider || f.lider.trim() === '' || f.lider.toUpperCase() === 'LIVRE';
+            return (f.status || 'LIVRE').toUpperCase() === 'LIVRE';
+        }
+        if (factionFilterActive === 'entregues') {
+            return (f.status || '').toUpperCase() === 'ENTREGUE';
         }
         if (factionFilterActive === 'comerciais') {
             const prod = (f.cds || '').toLowerCase();
@@ -642,47 +642,51 @@ function renderFactionList() {
     } else {
         filteredFactions.forEach(f => {
             const isSelected = state.selectedFaction && f.faccao.trim().toUpperCase() === state.selectedFaction.trim().toUpperCase();
+            const status = (f.status || 'LIVRE').toUpperCase();
             let badgeClass = 'badge-livre';
-            if (f.status === 'ENTREGUE') badgeClass = 'badge-entregue';
-            if (f.status === 'AGUARDANDO') badgeClass = 'badge-aguardando';
-            
+            if (status === 'ENTREGUE')  badgeClass = 'badge-entregue';
+            if (status === 'AGUARDANDO') badgeClass = 'badge-aguardando';
+
             const qgInfo = Array.isArray(state.qgs) ? state.qgs.find(q => q.faccao.trim().toUpperCase() === f.faccao.trim().toUpperCase()) : null;
             const resource = qgInfo ? qgInfo.prod : f.cds || 'RECURSOS';
 
-            // Pega o nome do líder: primeiro do sheetsData (rank 00), depois do próprio objeto
+            // Líder: prefere sheetsData rank 00, depois f.lider
             const sheetKey = f.faccao.trim().toUpperCase();
             const sheetData = state.sheetsData && state.sheetsData[sheetKey];
             const liderFromSheet = sheetData && Array.isArray(sheetData.members)
                 ? (sheetData.members.find(m => m.rank === '00') || {}).name || ''
                 : '';
             const liderName = liderFromSheet || f.lider || '';
-            const isAtiva = liderName && liderName.toUpperCase() !== 'LIVRE' && liderName.trim() !== '';
+            const hasLider = liderName && liderName.toUpperCase() !== 'LIVRE' && liderName.trim() !== '';
 
-            // Ícone e label do botão de toggle
-            const nextStatus   = f.status === 'ENTREGUE' ? 'LIVRE' : 'ENTREGUE';
-            const toggleIcon   = f.status === 'ENTREGUE' ? 'unlock' : 'check-circle';
-            const toggleTitle  = f.status === 'ENTREGUE' ? 'Marcar como LIVRE' : 'Marcar como ENTREGUE';
-            const toggleColor  = f.status === 'ENTREGUE' ? '#ffcc00' : '#00ffaa';
+            // Toggle: LIVRE ↔ ENTREGUE
+            const nextStatus  = status === 'ENTREGUE' ? 'LIVRE' : 'ENTREGUE';
+            const toggleIcon  = status === 'ENTREGUE' ? 'unlock' : 'check-circle';
+            const toggleTitle = status === 'ENTREGUE' ? 'Marcar como LIVRE' : 'Marcar como ENTREGUE';
+            const toggleColor = status === 'ENTREGUE' ? '#00ffaa' : '#ff3366';
 
             html += `
                 <div class="faction-card ${isSelected ? 'active' : ''}" data-fac="${f.faccao}">
                     <div class="faction-card-header">
                         <span class="faction-card-name">${f.faccao}</span>
                         <div style="display: flex; align-items: center; gap: 6px;">
-                            <span class="badge ${badgeClass}">${f.status}</span>
+                            <span class="badge ${badgeClass}">${status}</span>
                             ${isAuthenticated ? `
                             <button class="panel-btn btn-toggle-status" data-fac="${f.faccao}" data-next="${nextStatus}" style="border:none; background:transparent; width:20px; height:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="${toggleTitle}">
                                 <i data-lucide="${toggleIcon}" style="width:12px; height:12px; color: ${toggleColor};"></i>
                             </button>
-                            <button class="panel-btn btn-delete-faction" data-fac="${f.faccao}" style="border:none; background:transparent; color:rgba(255,255,255,0.4); width:20px; height:20px; cursor:pointer;" title="Excluir Organização">
+                            <button class="panel-btn btn-edit-faction" data-fac="${f.faccao}" style="border:none; background:transparent; width:20px; height:20px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Editar Facção">
+                                <i data-lucide="pencil" style="width:12px; height:12px; color: var(--purple-neon);"></i>
+                            </button>
+                            <button class="panel-btn btn-delete-faction" data-fac="${f.faccao}" style="border:none; background:transparent; width:20px; height:20px; cursor:pointer;" title="Excluir Organização">
                                 <i data-lucide="trash-2" style="width:12px; height:12px; color: #ff3366;"></i>
                             </button>` : ''}
                         </div>
                     </div>
                     <div class="faction-card-meta">
                         <span style="display:flex; align-items:center; gap:5px;">
-                            <i data-lucide="user" style="width:10px;height:10px; color:${isAtiva ? '#00ffaa' : '#ff3366'};"></i>
-                            <span style="color:${isAtiva ? 'var(--white-muted)' : '#ff3366'}; font-weight:${isAtiva ? '700' : '600'}">${isAtiva ? liderName : 'LIVRE'}</span>
+                            <i data-lucide="user" style="width:10px;height:10px; color:${hasLider ? '#00ffaa' : '#ff3366'};"></i>
+                            <span style="color:${hasLider ? 'var(--white-muted)' : '#ff3366'}; font-weight:${hasLider ? '700' : '600'}">${hasLider ? liderName : 'LIVRE'}</span>
                         </span>
                         <span>Tipo: <strong style="color: var(--purple-neon)">${resource}</strong></span>
                     </div>
@@ -703,6 +707,44 @@ function renderFactionList() {
 
     // Ouvinte para excluir facção
     if (isAuthenticated) {
+        // Editar facção (abre modal pré-preenchido)
+        document.querySelectorAll('.btn-edit-faction').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const facName = e.currentTarget.dataset.fac;
+                const fac = state.factions.find(f => f.faccao.trim().toUpperCase() === facName.trim().toUpperCase());
+                const qgData = Array.isArray(state.qgs) ? state.qgs.find(q => q.faccao.trim().toUpperCase() === facName.trim().toUpperCase()) : null;
+                const sheetData = state.sheetsData && state.sheetsData[facName.trim().toUpperCase()] || {};
+                if (!fac) return;
+
+                // Preenche o modal de cadastro com os dados existentes
+                document.getElementById('new-fac-name').value         = fac.faccao || '';
+                document.getElementById('new-fac-product').value      = fac.cds || (qgData ? qgData.prod : '') || '';
+                document.getElementById('new-fac-discord').value      = sheetData.discord || '';
+                document.getElementById('new-fac-qg').value           = sheetData.coords || (qgData ? qgData.local : '') || '';
+                document.getElementById('new-fac-craft').value        = sheetData.craft || '';
+                document.getElementById('new-fac-utilities').value    = sheetData.utilities || '';
+                document.getElementById('new-fac-garage-personal').value = sheetData.garagePersonal || '';
+                document.getElementById('new-fac-garage-fac').value   = sheetData.garageFaction || '';
+                document.getElementById('new-fac-chest-leader').value = sheetData.chestLeader || '';
+                document.getElementById('new-fac-chest-super').value  = sheetData.chestSupervisor || '';
+                document.getElementById('new-fac-chest-member').value = sheetData.chestMember || '';
+                document.getElementById('new-fac-route-farm').value   = sheetData.farm || '';
+                document.getElementById('new-fac-route-delivery').value = sheetData.delivery || '';
+                document.getElementById('new-fac-farm-cow').value     = sheetData.farmCow || '';
+                document.getElementById('new-fac-farm-fishing').value = sheetData.farmFishing || '';
+                document.getElementById('new-fac-farm-afk').value     = sheetData.farmAfk || '';
+
+                // Muda título do modal para indicar edição
+                document.querySelector('#create-faction-modal .modal-header h3').innerHTML =
+                    '<i data-lucide="pencil" style="color:var(--purple-neon)"></i> EDITAR FACÇÃO: ' + facName.toUpperCase();
+                // Guarda nome original para sobrescrever ao confirmar
+                document.getElementById('btn-confirm-create').dataset.editingFac = facName.toUpperCase();
+                lucide.createIcons();
+                createFactionModal.classList.add('active');
+            });
+        });
+
         document.querySelectorAll('.btn-delete-faction').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -1024,7 +1066,7 @@ function renderFactionWorkspace() {
         details.members.forEach((m, mIdx) => {
             html += `
                                     <tr>
-                                        <td style="font-family: var(--font-tech); color: var(--purple-neon); font-weight:bold; padding: 3px;">
+                                        <td class="member-rank-cell" style="padding: 3px;">
                                             <input type="text" class="editable-cell member-inp" data-index="${mIdx}" data-field="rank" value="${m.rank}" ${!isAuthenticated ? 'disabled' : ''}>
                                         </td>
                                         <td style="padding: 3px;">
@@ -1300,8 +1342,19 @@ function renderAll() {
 // 7. LOGICA DOS MODAIS (Criação de Facções e Autenticação)
 // ----------------------------------------------------
 
-btnCloseCreateModal.addEventListener('click', () => createFactionModal.classList.remove('active'));
-btnCancelCreate.addEventListener('click', () => createFactionModal.classList.remove('active'));
+function resetCreateModal() {
+    delete btnConfirmCreate.dataset.editingFac;
+    document.querySelectorAll('#create-faction-modal input').forEach(i => i.value = '');
+    const modalTitle = document.querySelector('#create-faction-modal .modal-header h3');
+    if (modalTitle) {
+        modalTitle.innerHTML = '<i data-lucide="plus-circle" style="color:var(--purple-neon)"></i> CADASTRAR NOVA FACÇÃO';
+        lucide.createIcons();
+    }
+    createFactionModal.classList.remove('active');
+}
+
+btnCloseCreateModal.addEventListener('click', resetCreateModal);
+btnCancelCreate.addEventListener('click', resetCreateModal);
 
 btnConfirmCreate.addEventListener('click', () => {
     if (!isAuthenticated) return;
@@ -1334,67 +1387,107 @@ btnConfirmCreate.addEventListener('click', () => {
     }
 
     const keyName = name.toUpperCase();
+    const editingFac = btnConfirmCreate.dataset.editingFac || null; // Nome original se editando
 
     // Garantia: se o Firebase ainda não devolveu os arrays, inicializa localmente
     if (!Array.isArray(state.factions))  state.factions  = [];
     if (!Array.isArray(state.qgs))       state.qgs       = [];
     if (!state.sheetsData || typeof state.sheetsData !== 'object') state.sheetsData = {};
 
-    state.factions.push({
-        setor: "LAVAGEM",
-        faccao: name,
-        set: "Setor",
-        lider: "LIVRE",
-        idDiscord: "",
-        entregue: "",
-        id: "",
-        status: "LIVRE",
-        cds: product,
-        inicial: "0"
-    });
+    if (editingFac) {
+        // ── MODO EDIÇÃO: sobrescreve dados da fac existente ──
+        const facIdx = state.factions.findIndex(f => f.faccao.trim().toUpperCase() === editingFac);
+        if (facIdx !== -1) {
+            state.factions[facIdx].cds = product;
+        }
+        const qgIdx = state.qgs.findIndex(q => q.faccao.trim().toUpperCase() === editingFac);
+        if (qgIdx !== -1) {
+            state.qgs[qgIdx].prod  = product;
+            state.qgs[qgIdx].local = qg;
+        }
+        // Preserva membros e customCoords existentes
+        const existingSheet = state.sheetsData[editingFac] || {};
+        state.sheetsData[editingFac] = {
+            ...existingSheet,
+            title: `QG | ${editingFac} | PRODUÇÃO DE ${product.toUpperCase()}`,
+            discord: discord,
+            coords: qg,
+            craft: craft,
+            chestLeader: chestLider,
+            chestSupervisor: chestSuper,
+            chestMember: chestMembro,
+            farm: routeFarm,
+            delivery: routeDeliv,
+            garagePersonal: garPersonal,
+            garageFaction: garFac,
+            utilities: utils,
+            farmCow: farmCow,
+            farmFishing: farmFish,
+            farmAfk: farmAfk,
+        };
+        // Reset título e botão para modo criação
+        document.querySelector('#create-faction-modal .modal-header h3').innerHTML =
+            '<i data-lucide="plus-circle" style="color:var(--purple-neon)"></i> CADASTRAR NOVA FACÇÃO';
+        delete btnConfirmCreate.dataset.editingFac;
+        lucide.createIcons();
+        showToast(`Facção ${editingFac} atualizada com sucesso!`);
+    } else {
+        // ── MODO CRIAÇÃO: adiciona nova fac ──
+        state.factions.push({
+            setor: "LAVAGEM",
+            faccao: name,
+            set: "Setor",
+            lider: "LIVRE",
+            idDiscord: "",
+            entregue: "",
+            id: "",
+            status: "LIVRE",
+            cds: product,
+            inicial: "0"
+        });
 
-    state.qgs.push({
-        prod: product,
-        faccao: name,
-        qg: "QG Novo",
-        lider: "",
-        id: "",
-        radio: "100,101,102",
-        status: "LIVRE",
-        local: qg,
-        initial: "0"
-    });
+        state.qgs.push({
+            prod: product,
+            faccao: name,
+            qg: "QG Novo",
+            lider: "",
+            id: "",
+            radio: "100,101,102",
+            status: "LIVRE",
+            local: qg,
+            initial: "0"
+        });
 
-    state.sheetsData[keyName] = {
-        title: `QG | ${keyName} | PRODUÇÃO DE ${product.toUpperCase()}`,
-        discord: discord,
-        coords: qg,
-        craft: craft,
-        chestLeader: chestLider,
-        chestSupervisor: chestSuper,
-        chestMember: chestMembro,
-        farm: routeFarm,
-        delivery: routeDeliv,
-        garagePersonal: garPersonal,
-        garageFaction: garFac,
-        utilities: utils,
-        farmCow: farmCow,
-        farmFishing: farmFish,
-        farmAfk: farmAfk,
-        tacticalRadio: "100",
-        operationalRadio: "101",
-        generalRadio: "102",
-        members: []
-    };
+        state.sheetsData[keyName] = {
+            title: `QG | ${keyName} | PRODUÇÃO DE ${product.toUpperCase()}`,
+            discord: discord,
+            coords: qg,
+            craft: craft,
+            chestLeader: chestLider,
+            chestSupervisor: chestSuper,
+            chestMember: chestMembro,
+            farm: routeFarm,
+            delivery: routeDeliv,
+            garagePersonal: garPersonal,
+            garageFaction: garFac,
+            utilities: utils,
+            farmCow: farmCow,
+            farmFishing: farmFish,
+            farmAfk: farmAfk,
+            tacticalRadio: "100",
+            operationalRadio: "101",
+            generalRadio: "102",
+            members: []
+        };
+        state.selectedFaction = name;
+    }
 
-    state.selectedFaction = name;
     saveState(true);
     
     document.querySelectorAll('#create-faction-modal input').forEach(i => i.value = '');
     createFactionModal.classList.remove('active');
     
     renderAll();
-    showToast("Nova facção criada e registrada no banco de dados!");
 });
 
 btnAuthStatus.addEventListener('click', () => {
