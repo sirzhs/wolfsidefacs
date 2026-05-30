@@ -647,6 +647,29 @@ function renderFactionList() {
     }
 }
 
+function renderCustomCoordCards(details, category) {
+    if (!details.customCoords) details.customCoords = [];
+    const filtered = details.customCoords.filter(c => c.category === category);
+    
+    let html = '';
+    filtered.forEach(c => {
+        html += `
+            <div class="coord-card" style="position: relative;">
+                <div class="coord-info" style="flex-grow: 1;">
+                    <input type="text" class="coord-custom-label-inp" data-id="${c.id}" value="${c.label}" placeholder="NOME DO PONTO" style="background:transparent; border:none; border-bottom:1px dashed rgba(255,255,255,0.15); color:var(--purple-neon); font-family:var(--font-tech); font-size:10px; font-weight:bold; width:100%; margin-bottom:4px; padding-bottom:2px;" ${!isAuthenticated ? 'disabled' : ''}>
+                    <input type="text" class="coord-val detail-custom-val-inp" data-id="${c.id}" value="${c.value || ''}" placeholder="x, y, z" ${!isAuthenticated ? 'disabled' : ''}>
+                </div>
+                <div style="display:flex; flex-direction:column; justify-content:center; gap:6px; padding:0 2px;">
+                    <button class="btn-copy-coord" data-copy="${c.value || ''}" style="height:20px; width:20px; border:none; background:transparent; cursor:pointer;" title="Copiar"><i data-lucide="copy" style="width:11px; height:11px;"></i></button>
+                    ${isAuthenticated ? `
+                    <button class="btn-delete-custom-coord" data-id="${c.id}" style="height:20px; width:20px; border:none; background:transparent; cursor:pointer;" title="Deletar"><i data-lucide="trash-2" style="width:11px; height:11px; color:#ff3366;"></i></button>
+                    ` : ''}
+                </div>
+            </div>`;
+    });
+    return html;
+}
+
 function renderFactionWorkspace() {
     if (!state.selectedFaction) {
         consoleWorkspaceArea.innerHTML = `
@@ -728,7 +751,10 @@ function renderFactionWorkspace() {
                     <div class="coords-block">
                         
                         <!-- 1. Acesso & QG -->
-                        <div class="coords-group-title" style="margin-top: 0;"><i data-lucide="map-pin"></i> 1. Acesso & QG</div>
+                        <div class="coords-group-title" style="margin-top: 0; display: flex; align-items: center; width: 100%;">
+                            <span style="display: flex; align-items: center; gap: 8px;"><i data-lucide="map-pin"></i> 1. Acesso & QG</span>
+                            ${isAuthenticated ? `<button class="btn-add-custom-coord" data-category="acesso" style="border:none; background:transparent; color:var(--purple-neon); cursor:pointer; font-family:var(--font-tech); font-size:10px; display:inline-flex; align-items:center; gap:4px; margin-left:auto; text-shadow:none;"><i data-lucide="plus-circle" style="width:12px; height:12px;"></i> ADICIONAR</button>` : ''}
+                        </div>
                         <div class="coords-widgets-grid">
                             <div class="coord-card">
                                 <div class="coord-info">
@@ -751,10 +777,14 @@ function renderFactionWorkspace() {
                                 </div>
                                 <button class="btn-copy-coord" data-copy="${details.utilities || ''}" title="Copiar Utilidades"><i data-lucide="copy"></i></button>
                             </div>
+                            ${renderCustomCoordCards(details, 'acesso')}
                         </div>
 
                         <!-- 2. Baús do QG -->
-                        <div class="coords-group-title"><i data-lucide="archive"></i> 2. BAUS: Baús do QG</div>
+                        <div class="coords-group-title" style="display: flex; align-items: center; width: 100%;">
+                            <span style="display: flex; align-items: center; gap: 8px;"><i data-lucide="archive"></i> 2. BAUS: Baús do QG</span>
+                            ${isAuthenticated ? `<button class="btn-add-custom-coord" data-category="baus" style="border:none; background:transparent; color:var(--purple-neon); cursor:pointer; font-family:var(--font-tech); font-size:10px; display:inline-flex; align-items:center; gap:4px; margin-left:auto; text-shadow:none;"><i data-lucide="plus-circle" style="width:12px; height:12px;"></i> ADICIONAR</button>` : ''}
+                        </div>
                         <div class="coords-widgets-grid">
                             <div class="coord-card">
                                 <div class="coord-info">
@@ -777,10 +807,14 @@ function renderFactionWorkspace() {
                                 </div>
                                 <button class="btn-copy-coord" data-copy="${details.chestMember || ''}" title="Copiar Baú Membros"><i data-lucide="copy"></i></button>
                             </div>
+                            ${renderCustomCoordCards(details, 'baus')}
                         </div>
 
                         <!-- 3. Garagens -->
-                        <div class="coords-group-title"><i data-lucide="car"></i> 3. Garagens do QG</div>
+                        <div class="coords-group-title" style="display: flex; align-items: center; width: 100%;">
+                            <span style="display: flex; align-items: center; gap: 8px;"><i data-lucide="car"></i> 3. Garagens do QG</span>
+                            ${isAuthenticated ? `<button class="btn-add-custom-coord" data-category="garagens" style="border:none; background:transparent; color:var(--purple-neon); cursor:pointer; font-family:var(--font-tech); font-size:10px; display:inline-flex; align-items:center; gap:4px; margin-left:auto; text-shadow:none;"><i data-lucide="plus-circle" style="width:12px; height:12px;"></i> ADICIONAR</button>` : ''}
+                        </div>
                         <div class="coords-widgets-grid">
                             <div class="coord-card">
                                 <div class="coord-info">
@@ -796,10 +830,14 @@ function renderFactionWorkspace() {
                                 </div>
                                 <button class="btn-copy-coord" data-copy="${details.garageFaction || ''}" title="Copiar Garagem Facção"><i data-lucide="copy"></i></button>
                             </div>
+                            ${renderCustomCoordCards(details, 'garagens')}
                         </div>
 
                         <!-- 4. Rotas -->
-                        <div class="coords-group-title"><i data-lucide="navigation"></i> 4. Rotas Operacionais</div>
+                        <div class="coords-group-title" style="display: flex; align-items: center; width: 100%;">
+                            <span style="display: flex; align-items: center; gap: 8px;"><i data-lucide="navigation"></i> 4. Rotas Operacionais</span>
+                            ${isAuthenticated ? `<button class="btn-add-custom-coord" data-category="rotas" style="border:none; background:transparent; color:var(--purple-neon); cursor:pointer; font-family:var(--font-tech); font-size:10px; display:inline-flex; align-items:center; gap:4px; margin-left:auto; text-shadow:none;"><i data-lucide="plus-circle" style="width:12px; height:12px;"></i> ADICIONAR</button>` : ''}
+                        </div>
                         <div class="coords-widgets-grid">
                             <div class="coord-card">
                                 <div class="coord-info">
@@ -815,10 +853,14 @@ function renderFactionWorkspace() {
                                 </div>
                                 <button class="btn-copy-coord" data-copy="${details.delivery || ''}" title="Copiar Rota Entrega"><i data-lucide="copy"></i></button>
                             </div>
+                            ${renderCustomCoordCards(details, 'rotas')}
                         </div>
 
                         <!-- 5. Farms Comerciais -->
-                        <div class="coords-group-title"><i data-lucide="coins"></i> 5. Farms Comerciais & AFK</div>
+                        <div class="coords-group-title" style="display: flex; align-items: center; width: 100%;">
+                            <span style="display: flex; align-items: center; gap: 8px;"><i data-lucide="coins"></i> 5. Farms Comerciais & AFK</span>
+                            ${isAuthenticated ? `<button class="btn-add-custom-coord" data-category="farms" style="border:none; background:transparent; color:var(--purple-neon); cursor:pointer; font-family:var(--font-tech); font-size:10px; display:inline-flex; align-items:center; gap:4px; margin-left:auto; text-shadow:none;"><i data-lucide="plus-circle" style="width:12px; height:12px;"></i> ADICIONAR</button>` : ''}
+                        </div>
                         <div class="coords-widgets-grid" style="padding-bottom: 20px;">
                             <div class="coord-card">
                                 <div class="coord-info">
@@ -841,6 +883,7 @@ function renderFactionWorkspace() {
                                 </div>
                                 <button class="btn-copy-coord" data-copy="${details.farmAfk || ''}" title="Copiar Farm AFK"><i data-lucide="copy"></i></button>
                             </div>
+                            ${renderCustomCoordCards(details, 'farms')}
                         </div>
 
                     </div>
@@ -973,6 +1016,85 @@ function renderFactionWorkspace() {
             }).catch(err => {
                 console.error("Falha ao copiar:", err);
             });
+        });
+    });
+
+    // 3.1. Edição de Título/Label de Coordenadas Customizadas
+    document.querySelectorAll('.coord-custom-label-inp').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+            if (!isAuthenticated) return;
+            const id = e.target.dataset.id;
+            const activeKey = state.selectedFaction.trim().toUpperCase();
+            if (!state.sheetsData[activeKey].customCoords) state.sheetsData[activeKey].customCoords = [];
+            const coord = state.sheetsData[activeKey].customCoords.find(c => c.id === id);
+            if (coord) {
+                coord.label = e.target.value;
+                saveState();
+            }
+        });
+    });
+
+    // 3.2. Edição de Valor de Coordenadas Customizadas
+    document.querySelectorAll('.detail-custom-val-inp').forEach(inp => {
+        inp.addEventListener('input', (e) => {
+            if (!isAuthenticated) return;
+            const id = e.target.dataset.id;
+            const activeKey = state.selectedFaction.trim().toUpperCase();
+            if (!state.sheetsData[activeKey].customCoords) state.sheetsData[activeKey].customCoords = [];
+            const coord = state.sheetsData[activeKey].customCoords.find(c => c.id === id);
+            if (coord) {
+                coord.value = e.target.value;
+                saveState();
+            }
+        });
+    });
+
+    // 3.3. Adicionar Coordenada Customizada
+    document.querySelectorAll('.btn-add-custom-coord').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            if (!isAuthenticated) return;
+            const category = e.currentTarget.dataset.category;
+            const activeKey = state.selectedFaction.trim().toUpperCase();
+            
+            if (!state.sheetsData[activeKey].customCoords) {
+                state.sheetsData[activeKey].customCoords = [];
+            }
+            
+            const nextIndex = state.sheetsData[activeKey].customCoords.filter(c => c.category === category).length + 1;
+            let defaultLabel = "";
+            if (category === 'acesso') defaultLabel = `PONTO EXTRA ${nextIndex}`;
+            else if (category === 'baus') defaultLabel = `BAÚ EXTRA ${nextIndex}`;
+            else if (category === 'garagens') defaultLabel = `GARAGEM EXTRA ${nextIndex}`;
+            else if (category === 'rotas') defaultLabel = `ROTA EXTRA ${nextIndex}`;
+            else if (category === 'farms') defaultLabel = `FARM EXTRA ${nextIndex}`;
+            else defaultLabel = `NOVA COORDENADA ${nextIndex}`;
+            
+            state.sheetsData[activeKey].customCoords.push({
+                id: "c_" + Date.now() + "_" + Math.random().toString(36).substring(2, 7),
+                label: defaultLabel,
+                value: "",
+                category: category
+            });
+            
+            saveState(true);
+            renderAll();
+            showToast("Coordenada adicional criada!");
+        });
+    });
+
+    // 3.4. Deletar Coordenada Customizada
+    document.querySelectorAll('.btn-delete-custom-coord').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            if (!isAuthenticated) return;
+            const id = e.currentTarget.dataset.id;
+            const activeKey = state.selectedFaction.trim().toUpperCase();
+            
+            if (confirm("Deseja realmente excluir esta coordenada adicional?")) {
+                state.sheetsData[activeKey].customCoords = state.sheetsData[activeKey].customCoords.filter(c => c.id !== id);
+                saveState(true);
+                renderAll();
+                showToast("Coordenada excluída!");
+            }
         });
     });
 

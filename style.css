@@ -158,9 +158,10 @@ body::before {
 
 .hud-wrapper {
     position: relative;
-    width: 1920px;
-    height: 1080px;
-    padding: 30px 40px;
+    width: 100%;
+    max-width: 1450px;
+    min-height: 98vh;
+    padding: 20px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -1132,29 +1133,20 @@ body::before {
    AJUSTES RESPONSIVOS (CRÍTICO PARA OUTRAS RESOLUÇÕES)
    ---------------------------------------------------- */
 
-@media (max-width: 1920px) or (max-height: 1080px) {
-    /* Efeito de escala uniforme para telas menores manterem a proporção HUD perfeita */
-    body {
-        padding: 10px;
-    }
-    
-    .hud-wrapper {
-        transform: scale(calc(min(window.innerWidth / 1920, window.innerHeight / 1080) * 0.95));
-        transform-origin: center center;
-        max-width: 100%;
-        max-height: 100%;
-        width: 100vw;
-        height: 100vh;
-        padding: 15px;
-    }
-}
-
-/* Responsividade de Tela de Navegador Normal */
+/* Responsividade de Tela de Navegador Normal / Tablet */
 @media (max-width: 1200px) {
+    body {
+        display: block !important;
+        height: auto !important;
+        overflow-y: auto !important;
+        padding: 0 !important;
+    }
+
     .hud-wrapper {
-        transform: none !important;
         width: 100%;
+        max-width: 100%;
         height: auto;
+        min-height: auto;
         padding: 20px;
         display: flex;
         flex-direction: column;
@@ -1187,9 +1179,88 @@ body::before {
         width: 100%;
         height: auto;
     }
+}
+
+/* Responsividade para Telas de Celulares (Mobile) */
+@media (max-width: 768px) {
+    .hud-wrapper {
+        padding: 10px;
+    }
     
-    body {
-        overflow-y: auto;
+    .hud-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+        padding-bottom: 15px;
+    }
+    
+    .header-left {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .header-left .system-divider {
+        display: none;
+    }
+    
+    .header-right {
+        width: 100%;
+    }
+    
+    .header-right button {
+        width: 100%;
+    }
+    
+    .title-container h1 {
+        font-size: 28px !important;
+    }
+    
+    .title-container p {
+        font-size: 11px !important;
+    }
+    
+    .radio-widgets-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .faction-detail-grid {
+        grid-template-columns: 1fr !important;
+        display: flex !important;
+        flex-direction: column !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
+    
+    .detail-left-col, .detail-right-col {
+        width: 100% !important;
+        height: auto !important;
+        overflow: visible !important;
+        padding-right: 0 !important;
+    }
+    
+    .coords-widgets-grid {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .hud-footer {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+        padding-top: 15px;
+    }
+    
+    .footer-left, .footer-center, .footer-right {
+        width: 100%;
+        text-align: center;
+    }
+    
+    #create-faction-modal .modal-body {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .modal-container {
+        padding: 20px 15px !important;
     }
 }
 
