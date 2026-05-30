@@ -55,6 +55,12 @@ const btnSubmitAuth = document.getElementById('btn-submit-auth');
 const btnLogout = document.getElementById('btn-logout');
 const authInputId = document.getElementById('auth-input-id');
 
+// Novos elementos de auth dentro do modal de Configurações
+const authInputIdSettings = document.getElementById('auth-input-id-settings');
+const btnSubmitAuthSettings = document.getElementById('btn-submit-auth-settings');
+const btnLogoutSettings = document.getElementById('btn-logout-settings');
+const authStatusSettings = document.getElementById('auth-status-settings');
+
 const mainTitle = document.getElementById('main-title');
 const mainSubtitle = document.getElementById('main-subtitle');
 const footerText = document.getElementById('footer-text');
@@ -713,6 +719,8 @@ function renderFactionList() {
                 document.getElementById('new-fac-product').value      = fac.cds || (qgData ? qgData.prod : '') || '';
                 document.getElementById('new-fac-discord').value      = sheetData.discord || '';
                 document.getElementById('new-fac-qg').value           = sheetData.coords || (qgData ? qgData.local : '') || '';
+                const qgNumEl = document.getElementById('new-fac-qg-number');
+                if (qgNumEl) qgNumEl.value = sheetData.qgNumber || '';
                 document.getElementById('new-fac-craft').value        = sheetData.craft || '';
                 document.getElementById('new-fac-utilities').value    = sheetData.utilities || '';
                 document.getElementById('new-fac-garage-personal').value = sheetData.garagePersonal || '';
@@ -899,8 +907,13 @@ function renderFactionWorkspace() {
                             ${isAuthenticated ? `<button class="btn-add-custom-coord" data-category="acesso" style="border:none; background:transparent; color:var(--purple-neon); cursor:pointer; font-family:var(--font-tech); font-size:10px; display:inline-flex; align-items:center; gap:4px; margin-left:auto; text-shadow:none;"><i data-lucide="plus-circle" style="width:12px; height:12px;"></i> ADICIONAR</button>` : ''}
                         </div>
                         <div class="coords-widgets-grid">
-                            <div class="coord-card">
-                                <div class="coord-info">
+                            <div class="coord-card" style="grid-column: span 2; display:flex; align-items:center; gap:10px; background:rgba(186,85,211,0.05); border-color:rgba(186,85,211,0.2);">
+                                <div class="coord-info" style="flex:0 0 auto; min-width:90px;">
+                                    <span class="coord-label" style="font-size:9px;">Nº DO QG</span>
+                                    <input type="text" class="coord-val detail-inp" data-field="qgNumber" value="${details.qgNumber || ''}" placeholder="Ex: QG-01" ${!isAuthenticated ? 'disabled' : ''} style="font-size:18px; font-weight:800; font-family:var(--font-tech); color:var(--purple-neon); text-align:center; width:90px;">
+                                </div>
+                                <div style="width:1px; height:40px; background:rgba(255,255,255,0.1);"></div>
+                                <div class="coord-info" style="flex:1;">
                                     <span class="coord-label">CDS QG</span>
                                     <input type="text" class="coord-val detail-inp" data-field="coords" value="${details.coords || ''}" ${!isAuthenticated ? 'disabled' : ''}>
                                 </div>
@@ -913,7 +926,7 @@ function renderFactionWorkspace() {
                                 </div>
                                 <button class="btn-copy-coord" data-copy="${details.craft || ''}" title="Copiar Craft"><i data-lucide="copy"></i></button>
                             </div>
-                            <div class="coord-card" style="grid-column: span 2;">
+                            <div class="coord-card">
                                 <div class="coord-info">
                                     <span class="coord-label">UTILIDADES DO QG</span>
                                     <input type="text" class="coord-val detail-inp" data-field="utilities" value="${details.utilities || ''}" ${!isAuthenticated ? 'disabled' : ''}>
@@ -922,6 +935,7 @@ function renderFactionWorkspace() {
                             </div>
                             ${renderCustomCoordCards(details, 'acesso')}
                         </div>
+
 
                         <!-- 2. Baús do QG -->
                         <div class="coords-group-title" style="display: flex; align-items: center; width: 100%;">
@@ -1368,6 +1382,7 @@ btnConfirmCreate.addEventListener('click', () => {
     const discord = document.getElementById('new-fac-discord').value.trim();
     
     const qg = document.getElementById('new-fac-qg').value.trim();
+    const qgNumber = (document.getElementById('new-fac-qg-number') || {}).value ? document.getElementById('new-fac-qg-number').value.trim() : '';
     const craft = document.getElementById('new-fac-craft').value.trim();
     const utils = document.getElementById('new-fac-utilities').value.trim();
     
@@ -1421,6 +1436,7 @@ btnConfirmCreate.addEventListener('click', () => {
             title: `QG | ${editingFac} | PRODUÇÃO DE ${product.toUpperCase()}`,
             discord: discord,
             coords: qg,
+            qgNumber: qgNumber,
             craft: craft,
             chestLeader: chestLider,
             chestSupervisor: chestSuper,
@@ -1441,7 +1457,6 @@ btnConfirmCreate.addEventListener('click', () => {
             '<i data-lucide="plus-circle" style="color:var(--purple-neon)"></i> CADASTRAR NOVA FACÇÃO';
         delete btnConfirmCreate.dataset.editingFac;
         lucide.createIcons();
-        showToast(`Facção ${editingFac} atualizada com sucesso!`);
     } else {
         // ── MODO CRIAÇÃO: adiciona nova fac ──
         state.factions.push({
@@ -1474,6 +1489,7 @@ btnConfirmCreate.addEventListener('click', () => {
             title: `QG | ${keyName} | PRODUÇÃO DE ${product.toUpperCase()}`,
             discord: discord,
             coords: qg,
+            qgNumber: qgNumber,
             craft: craft,
             chestLeader: chestLider,
             chestSupervisor: chestSuper,
@@ -1497,8 +1513,10 @@ btnConfirmCreate.addEventListener('click', () => {
     }
 
     saveState(true);
+    showToast('✅ Configurado com sucesso!');
     
-    document.querySelectorAll('#create-faction-modal input').forEach(i => i.value = '');
+    const qgNumberField = document.getElementById('new-fac-qg-number');
+    if (qgNumberField) qgNumberField.value = '';
     const obsField = document.getElementById('new-fac-obs');
     if (obsField) obsField.value = '';
     const tipoField = document.getElementById('new-fac-tipo');
@@ -1509,8 +1527,17 @@ btnConfirmCreate.addEventListener('click', () => {
 });
 
 btnAuthStatus.addEventListener('click', () => {
-    authModal.classList.add('active');
-    authInputId.value = localStorage.getItem('wolfside_user_id') || '';
+    // Abre o modal de Configurações diretamente na seção de autenticação
+    settingsModal.classList.add('active');
+    const config = getFirebaseConfig();
+    firebaseApiKeyInput.value = config.apiKey;
+    firebaseDbUrlInput.value = config.databaseURL;
+    firebaseProjectIdInput.value = config.projectId;
+    btnConnectSheets.innerHTML = `<i data-lucide="link"></i> Salvar & Conectar`;
+    // Preenche o campo de ID de auth com o valor salvo
+    if (authInputIdSettings) authInputIdSettings.value = localStorage.getItem('wolfside_user_id') || '';
+    _updateSettingsAuthUI();
+    lucide.createIcons();
 });
 
 btnCloseAuthModal.addEventListener('click', () => authModal.classList.remove('active'));
@@ -1544,6 +1571,55 @@ btnLogout.addEventListener('click', () => {
         });
     }
 });
+
+// Helper: atualiza UI de auth dentro do settings modal
+function _updateSettingsAuthUI() {
+    if (!authStatusSettings) return;
+    const savedId = localStorage.getItem('wolfside_user_id') || '';
+    if (isAuthenticated && savedId) {
+        authStatusSettings.innerHTML = `<span style="color:#00ffaa;">&#10003; AUTENTICADO como <strong>${savedId}</strong></span>`;
+        if (btnLogoutSettings) btnLogoutSettings.style.display = 'flex';
+        if (btnSubmitAuthSettings) btnSubmitAuthSettings.style.display = 'none';
+        if (authInputIdSettings) authInputIdSettings.style.display = 'none';
+    } else {
+        authStatusSettings.innerHTML = `<span style="color:var(--white-dim);">&#128274; Modo Leitura &mdash; insira seu ID para editar</span>`;
+        if (btnLogoutSettings) btnLogoutSettings.style.display = 'none';
+        if (btnSubmitAuthSettings) btnSubmitAuthSettings.style.display = 'flex';
+        if (authInputIdSettings) authInputIdSettings.style.display = 'block';
+    }
+}
+
+// Autenticar via settings
+if (btnSubmitAuthSettings) {
+    btnSubmitAuthSettings.addEventListener('click', () => {
+        const idVal = (authInputIdSettings ? authInputIdSettings.value : '').trim();
+        if (!idVal) { alert('Por favor, digite seu ID!'); return; }
+        if (state.authorizedIds && state.authorizedIds.includes(idVal)) {
+            localStorage.setItem('wolfside_user_id', idVal);
+            checkAuthStatus().then(() => {
+                renderAll();
+                _updateSettingsAuthUI();
+                showToast('&#128275; Permissão de edição liberada!');
+            });
+        } else {
+            alert('Acesso Negado! Esse ID não consta na lista de membros autorizados.');
+        }
+    });
+}
+
+// Bloquear via settings
+if (btnLogoutSettings) {
+    btnLogoutSettings.addEventListener('click', () => {
+        if (confirm('Bloquear permissões de edição deste navegador?')) {
+            localStorage.removeItem('wolfside_user_id');
+            checkAuthStatus().then(() => {
+                renderAll();
+                _updateSettingsAuthUI();
+                showToast('Painel bloqueado para Modo Leitura.');
+            });
+        }
+    });
+}
 
 // Título, subtítulo e rodapé travados (não editáveis)
 
@@ -1581,7 +1657,8 @@ btnOpenSettings.addEventListener('click', () => {
     firebaseApiKeyInput.value = config.apiKey;
     firebaseDbUrlInput.value = config.databaseURL;
     firebaseProjectIdInput.value = config.projectId;
-    
+    if (authInputIdSettings) authInputIdSettings.value = localStorage.getItem('wolfside_user_id') || '';
+    _updateSettingsAuthUI();
     btnConnectSheets.innerHTML = `<i data-lucide="link"></i> Salvar & Conectar`;
     lucide.createIcons();
 });

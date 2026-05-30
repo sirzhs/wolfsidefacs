@@ -186,6 +186,21 @@
                         <button class="hud-btn danger-btn" id="btn-reset-data"><i data-lucide="refresh-cw"></i> Redefinir Tudo</button>
                     </div>
                 </div>
+
+                <!-- Seção 4: Autenticação de Acesso -->
+                <div class="config-section">
+                    <h4 class="section-title"><i data-lucide="shield-check" style="color:var(--purple-neon)"></i> 4. Autenticação de Acesso</h4>
+                    <p class="section-desc">Insira seu <strong>ID de Discord</strong> ou <strong>ID de Cidade</strong> registrado na lista de membros autorizados para liberar permissões de edição.</p>
+                    <div class="form-group">
+                        <label for="auth-input-id-settings">ID de Discord ou ID Cidade:</label>
+                        <input type="text" id="auth-input-id-settings" placeholder="Ex: 900303877260320788 ou 104" class="hud-input" style="font-family: var(--font-tech); text-align: center; font-size:15px; letter-spacing:0.08em;">
+                    </div>
+                    <div class="sync-actions-row" style="margin-top:10px; gap:10px;">
+                        <button class="hud-btn success-btn" id="btn-submit-auth-settings" style="flex:1;"><i data-lucide="unlock"></i> Autenticar</button>
+                        <button class="hud-btn secondary-btn" id="btn-logout-settings" style="flex:1; display:none;"><i data-lucide="log-out"></i> Bloquear Acesso</button>
+                    </div>
+                    <div id="auth-status-settings" style="margin-top:10px; font-size:11px; font-family:var(--font-tech); color:var(--white-dim); text-align:center;"></div>
+                </div>
             </div>
             
             <footer class="modal-footer">
@@ -232,10 +247,16 @@
 
                     <!-- Seção 2: Pontos de QG -->
                     <div class="config-section">
-                        <h4 class="section-title"><i data-lucide="map-pin"></i> 2. QG & Fabricação</h4>
-                        <div class="form-group">
-                            <label for="new-fac-qg">Coordenadas do QG (CDS QG):</label>
-                            <input type="text" id="new-fac-qg" placeholder="x, y, z, h" class="hud-input">
+                        <h4 class="section-title"><i data-lucide="map-pin"></i> 2. QG &amp; Fabricação</h4>
+                        <div class="form-group" style="display:flex; gap:10px; align-items:flex-end;">
+                            <div style="flex:0 0 130px;">
+                                <label for="new-fac-qg-number">Nº do QG:</label>
+                                <input type="text" id="new-fac-qg-number" placeholder="Ex: QG-01" class="hud-input" style="font-family:var(--font-tech); text-align:center; font-weight:800; font-size:15px;">
+                            </div>
+                            <div style="flex:1;">
+                                <label for="new-fac-qg">Coordenadas do QG (CDS QG):</label>
+                                <input type="text" id="new-fac-qg" placeholder="x, y, z, h" class="hud-input">
+                            </div>
                         </div>
                         <div class="form-group" style="margin-top: 10px;">
                             <label for="new-fac-craft">Ponto de Craft:</label>
